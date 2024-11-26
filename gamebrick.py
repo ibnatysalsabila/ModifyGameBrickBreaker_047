@@ -69,3 +69,32 @@ class Ball(GameObject):
                 game_object.hit()  # Hit pada brick
 
 
+# Kelas Paddle mewarisi GameObject, merepresentasikan paddle dalam permainan
+class Paddle(GameObject):
+    def __init__(self, canvas, x, y):
+        # Inisialisasi paddle dengan ukuran dan posisi
+        self.width = 120
+        self.height = 10
+        self.ball = None  # Bola yang terhubung dengan paddle
+        item = canvas.create_rectangle(
+            x - self.width / 2, y - self.height / 2,
+            x + self.width / 2, y + self.height / 2,
+            fill='#FFB643',  # Warna paddle
+            outline='#FF8C00'  # Outline paddle
+        )
+        super(Paddle, self).__init__(canvas, item)
+
+    def set_ball(self, ball):
+        # Menghubungkan paddle dengan bola
+        self.ball = ball
+
+    def move(self, offset):
+        # Menggerakkan paddle ke kiri atau kanan
+        coords = self.get_position()
+        width = self.canvas.winfo_width()
+        if coords[0] + offset >= 0 and coords[2] + offset <= width:
+            super(Paddle, self).move(offset, 0)
+            if self.ball is not None:
+                self.ball.move(offset, 0)
+
+
