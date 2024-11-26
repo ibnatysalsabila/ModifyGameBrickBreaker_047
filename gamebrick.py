@@ -98,3 +98,26 @@ class Paddle(GameObject):
                 self.ball.move(offset, 0)
 
 
+# Kelas Brick mewarisi GameObject, merepresentasikan balok dalam permainan
+class Brick(GameObject):
+    COLORS = {1: '#FF0000', 2: '#FFFF00', 3: '#00FF00', 4: '#0000FF', 5: '#FFFFFF', 6: '#000000'}
+
+    def __init__(self, canvas, x, y, hits):
+        # Inisialisasi brick dengan warna sesuai jumlah hits
+        self.width = 80  # Lebar brick
+        self.height = 20  # Tinggi brick
+        self.hits = hits  # Jumlah hits yang diperlukan untuk menghancurkan brick
+        color = Brick.COLORS[hits]
+        item = canvas.create_rectangle(
+            x - self.width / 2, y - self.height / 2,
+            x + self.width / 2, y + self.height / 2,
+            fill=color, tags='brick'  # Tag untuk identifikasi brick
+        )
+        super(Brick, self).__init__(canvas, item)
+
+    def hit(self):
+        # Menghapus brick dari canvas saat terkena bola
+        self.delete()
+        game.increase_score()  # Menambah skor
+
+
