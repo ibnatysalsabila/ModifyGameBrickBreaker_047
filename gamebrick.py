@@ -246,3 +246,9 @@ class Game(tk.Frame):
         self.ball.collide(objects)
 
 
+# Menjalankan permainan
+if __name__ == '__main__':
+    root = tk.Tk()
+    root.title('Break those Bricks!')
+    game = Game(root)
+    game.mainloop()
