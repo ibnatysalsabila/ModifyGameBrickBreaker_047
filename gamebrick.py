@@ -121,3 +121,128 @@ class Brick(GameObject):
         game.increase_score()  # Menambah skor
 
 
+# Kelas Game adalah inti dari permainan, mengatur semua objek dan logika permainan
+class Game(tk.Frame):
+    def __init__(self, master):
+        super(Game, self).__init__(master)
+        # Inisialisasi variabel game
+        self.lives = 3
+        self.score = 0
+        self.width = 800  # Ukuran canvas (lebar)
+        self.height = 600  # Ukuran canvas (tinggi)
+        self.canvas = tk.Canvas(self, bg='#A0D6E4',
+                                width=self.width,
+                                height=self.height)
+        self.canvas.pack()
+        self.pack()
+
+        self.items = {}  # Menyimpan semua objek game
+        self.ball = None
+        self.paddle = Paddle(self.canvas, self.width / 2, 550)  # Membuat paddle
+        self.items[self.paddle.item] = self.paddle
+
+        self.create_brick_layout()  # Membuat layout brick
+
+        self.hud = None  # Menampilkan nyawa
+        self.hud_score = None  # Menampilkan skor
+        self.setup_game()  # Setup awal permainan
+        self.canvas.focus_set()
+        self.canvas.bind('<Left>', lambda _: self.paddle.move(-10))  # Gerakan paddle kiri
+        self.canvas.bind('<Right>', lambda _: self.paddle.move(10))  # Gerakan paddle kanan
+
+    def create_brick_layout(self):
+        # Membuat layout brick secara grid
+        brick_width = 80
+        brick_height = 20
+        padding = 5
+        rows = 8
+        cols = self.width // (brick_width + padding)
+
+        for row in range(rows):
+            for col in range(cols):
+                x = padding + col * (brick_width + padding) + brick_width / 2
+                y = 50 + row * (brick_height + padding) + brick_height / 2
+                hits = (row % 6) + 1  # Variasi jumlah hits per baris
+                self.add_brick(x, y, hits)
+
+    def setup_game(self):
+        # Setup permainan baru
+        self.add_ball()
+        self.update_lives_text()
+        self.update_score_text()
+        self.text = self.draw_text(400, 300, 'Click Space to Start', 19, 'black')
+        self.canvas.bind('<space>', lambda _: self.start_game())
+
+    def add_ball(self):
+        # Menambahkan bola baru di atas paddle
+        if self.ball is not None:
+            self.ball.delete()
+        paddle_coords = self.paddle.get_position()
+        x = (paddle_coords[0] + paddle_coords[2]) * 0.5
+        self.ball = Ball(self.canvas, x, 530)
+        self.paddle.set_ball(self.ball)
+
+    def add_brick(self, x, y, hits):
+        # Menambahkan brick baru ke canvas
+        brick = Brick(self.canvas, x, y, hits)
+        self.items[brick.item] = brick
+
+    def draw_text(self, x, y, text, size, color):
+        # Menampilkan teks di canvas
+        font = ('Forte', size)
+        return self.canvas.create_text(x, y, text=text, font=font, fill=color)
+
+    def update_lives_text(self):
+        # Mengupdate teks nyawa
+        text = 'Lives: %s' % self.lives
+        if self.hud is None:
+            self.hud = self.draw_text(50, 20, text, 15, 'black')
+        else:
+            self.canvas.itemconfig(self.hud, text=text)
+
+    def update_score_text(self):
+        # Mengupdate teks skor
+        text = 'Score: %s' % self.score
+        if self.hud_score is None:
+            self.hud_score = self.draw_text(750, 20, text, 15, 'black')
+        else:
+            self.canvas.itemconfig(self.hud_score, text=text)
+
+    def increase_score(self):
+        # Menambah skor
+        self.score += 10
+        self.update_score_text()
+
+    def start_game(self):
+        # Memulai game loop
+        self.canvas.unbind('<space>')
+        self.canvas.delete(self.text)
+        self.paddle.ball = None
+        self.game_loop()
+
+    def game_loop(self):
+        # Loop utama permainan
+        self.check_collisions()
+        num_bricks = len(self.canvas.find_withtag('brick'))
+        if num_bricks == 0:
+            self.ball.speed = None  # Menghentikan bola
+            self.draw_text(400, 300, 'You win! You are the Breaker of Bricks.', 20, 'black')
+        elif self.ball.get_position()[3] >= self.height:
+            self.ball.speed = None
+            self.lives -= 1
+            if self.lives < 0:
+                self.draw_text(400, 300, 'You Lose! Game Over!', 20, 'red')
+            else:
+                self.after(1000, self.setup_game)
+        else:
+            self.ball.update()
+            self.after(50, self.game_loop)
+
+    def check_collisions(self):
+        # Mengecek tabrakan bola dengan objek lain
+        ball_coords = self.ball.get_position()
+        items = self.canvas.find_overlapping(*ball_coords)
+        objects = [self.items[x] for x in items if x in self.items]
+        self.ball.collide(objects)
+
+
